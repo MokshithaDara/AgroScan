@@ -45,23 +45,7 @@ Utilities & APIs
 
 Weather API
 gTTS (Text-to-Speech)
-📂 Project Structure
-AgroScan/
-│
-├── backend/
-│   ├── app.py
-│   ├── database.py
-│   ├── model/
-│   ├── utils/
-│
-├── frontend/
-│   ├── index.html
-│   ├── dashboard.html
-│   ├── scan.js
-│   ├── style.css
-│
-├── README.md
-├── .gitignore
+
 ▶️ Setup & Run
 1. Clone the Repository
 git clone https://github.com/MokshithaDara/AgroScan.git
