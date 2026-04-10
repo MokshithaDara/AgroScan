@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AgroScan | Weather Advisory</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div id="app"></div>
+
+<script src="app.js"></script>
+<script src="advisory.js"></script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+renderShell(
+"Smart Weather Advisory",
+"Check weather conditions and get crop care suggestions.",
+"from-cyan-900 via-sky-700 to-emerald-700"
+)
+
+const pageContent=document.getElementById("pageContent")
+
+pageContent.innerHTML=`
+
+<section class="grid gap-8 xl:grid-cols-[0.9fr_1.1fr]">
+
+<div class="space-y-6">
+
+<div class="bg-white p-6 rounded-2xl shadow">
+
+<h3 class="text-xl font-semibold">
+Check Weather
+</h3>
+
+<p class="text-sm text-gray-500 mt-1">
+Select or type a location to view weather conditions and farming insights.
+</p>
+
+
+<div class="mt-4 flex gap-2">
+
+<input
+id="loc"
+list="locationList"
+placeholder="Type village / city"
+class="w-full border rounded-xl px-4 py-3"
+/>
+
+<datalist id="locationList">
+
+<option value="Ongole">
+<option value="Guntur">
+<option value="Vijayawada">
+<option value="Nellore">
+<option value="Tirupati">
+<option value="Hyderabad">
+<option value="Warangal">
+<option value="Nizamabad">
+<option value="Bangalore">
+<option value="Mysuru">
+<option value="Mandya">
+<option value="Hassan">
+<option value="Chennai">
+<option value="Coimbatore">
+<option value="Madurai">
+<option value="Delhi">
+<option value="Mumbai">
+<option value="Kolkata">
+<option value="Pune">
+<option value="Ahmedabad">
+
+</datalist>
+
+<button
+onclick="detectWeatherLocation()"
+class="px-4 py-3 bg-cyan-700 text-white rounded-xl"
+>
+📍
+</button>
+
+</div>
+
+<p class="text-xs text-gray-500 mt-2">
+Type any location or auto detect
+</p>
+
+
+<button
+onclick="getWeather()"
+class="mt-4 bg-cyan-700 text-white px-6 py-3 rounded-xl w-full"
+>
+Check Weather
+</button>
+
+</div>
+
+
+<div class="bg-white p-6 rounded-2xl shadow">
+
+<h3 class="text-lg font-semibold">
+Advisory Tips
+</h3>
+
+<ul class="mt-4 text-sm text-gray-600 space-y-2">
+
+<li>• High humidity increases fungal disease risk</li>
+<li>• Monitor crops during heavy rainfall</li>
+<li>• Apply preventive spraying if disease risk increases</li>
+<li>• Use weather information before irrigation planning</li>
+
+</ul>
+
+</div>
+
+</div>
+
+
+<div id="weather"></div>
+
+</section>
+
+`
+
+})
+
+</script>
+
+</body>
+</html>

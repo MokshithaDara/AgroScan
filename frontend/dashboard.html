@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AgroScan | Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config={
+theme:{
+extend:{
+fontFamily:{poppins:["Poppins","sans-serif"]}
+}
+}
+}
+</script>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body class="font-poppins">
+
+<div id="app"></div>
+
+<script src="app.js"></script>
+<script src="dashboard.js"></script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+renderShell(
+"Farm Dashboard",
+"View latest scan information and overall scan statistics.",
+"from-slate-950 via-emerald-900 to-green-700"
+)
+
+const pageContent=document.getElementById("pageContent")
+
+pageContent.innerHTML=`
+
+<section class="space-y-8">
+
+<div class="grid md:grid-cols-2 gap-6">
+
+<div class="rounded-[28px] border border-emerald-100 bg-emerald-50 p-6 shadow">
+
+<p class="text-sm text-emerald-700">
+Total Scans
+</p>
+
+<p id="totalScans" class="text-3xl font-bold text-emerald-900 mt-2">
+0
+</p>
+
+</div>
+
+
+<div class="rounded-[28px] border border-amber-100 bg-amber-50 p-6 shadow">
+
+<p class="text-sm text-amber-700">
+Latest Scan
+</p>
+
+<p id="latestDisease" class="text-xl font-bold text-amber-900 mt-2">
+-
+</p>
+
+</div>
+
+</div>
+
+
+
+<div class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
+
+<h4 class="text-xl font-semibold text-slate-900">
+Recent Scan History
+</h4>
+
+<div id="history" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mt-6"></div>
+
+</div>
+
+</section>
+
+`
+
+loadHistory()
+
+})
+
+</script>
+
+</body>
+</html>
