@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>AgroScan | Home</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+theme: {
+extend: {
+fontFamily: {
+poppins: ["Poppins", "sans-serif"]
+}
+}
+}
+};
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css" />
+
+</head>
+
+
+<body class="font-poppins">
+
+<div id="app"></div>
+
+<script src="app.js"></script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+
+renderShell(
+"AI Powered Crop Health Platform",
+"A clear, mobile-friendly agriculture web app for scanning crop disease, checking weather advisory, viewing history, and exploring crop knowledge.",
+"from-emerald-900 via-green-800 to-lime-700"
+);
+
+const pageContent = document.getElementById("pageContent");
+
+pageContent.innerHTML = `
+
+<section class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+
+<div class="space-y-6">
+
+<div class="rounded-[28px] bg-white p-6 md:p-8 shadow-xl border border-slate-200">
+
+<h4 class="text-2xl font-bold text-slate-900">
+What AgroScan helps you do
+</h4>
+
+<p class="mt-3 text-sm md:text-base text-slate-600 leading-7">
+
+AgroScan is designed as a complete farmer workflow.
+Detect plant disease from leaf images, get severity and treatment advice,
+check weather-related risk, browse crop information,
+and maintain scan history using your unique farmer ID.
+
+</p>
+
+
+<div class="mt-6 grid gap-4 md:grid-cols-2">
+
+<a href="index.html"
+class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+
+<div class="text-3xl">📷</div>
+
+<h5 class="mt-3 text-lg font-semibold">
+Start Crop Scan
+</h5>
+
+<p class="mt-2 text-sm text-slate-500">
+Upload crop image and get AI disease diagnosis.
+</p>
+
+</a>
+
+
+<a href="dashboard.html"
+class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+
+<div class="text-3xl">📊</div>
+
+<h5 class="mt-3 text-lg font-semibold">
+View Dashboard
+</h5>
+
+<p class="mt-2 text-sm text-slate-500">
+Check recent scans, stats, and latest activity.
+</p>
+
+</a>
+
+
+<a href="advisory.html"
+class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+
+<div class="text-3xl">🌦️</div>
+
+<h5 class="mt-3 text-lg font-semibold">
+Weather Advisory
+</h5>
+
+<p class="mt-2 text-sm text-slate-500">
+Get temperature, humidity, and condition insights.
+</p>
+
+</a>
+
+
+<a href="library.html"
+class="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+
+<div class="text-3xl">🌾</div>
+
+<h5 class="mt-3 text-lg font-semibold">
+Crop Library
+</h5>
+
+<p class="mt-2 text-sm text-slate-500">
+Explore supported crops and common diseases.
+</p>
+
+</a>
+
+</div>
+</div>
+
+
+<div class="grid gap-4 md:grid-cols-3">
+
+${createStatCard(
+"Core feature",
+"AI Scan",
+"Image-based crop diagnosis",
+"emerald"
+)}
+
+${createStatCard(
+"Advisory",
+"Weather",
+"Humidity and temperature support",
+"cyan"
+)}
+
+${createStatCard(
+"Tracking",
+"History",
+"Saved farmer scan records",
+"amber"
+)}
+
+</div>
+
+</div>
+
+
+
+<div class="space-y-6">
+
+<div class="rounded-[28px] bg-slate-950 p-6 text-white shadow-2xl">
+
+<h4 class="text-xl font-semibold">
+Farmer Workflow
+</h4>
+
+<div class="mt-5 space-y-4">
+
+<div class="rounded-2xl bg-white/5 p-4">
+1. Upload crop image
+</div>
+
+<div class="rounded-2xl bg-white/5 p-4">
+2. Detect disease and severity
+</div>
+
+<div class="rounded-2xl bg-white/5 p-4">
+3. Review recommendation and treatment
+</div>
+
+<div class="rounded-2xl bg-white/5 p-4">
+4. Check weather and alerts
+</div>
+
+<div class="rounded-2xl bg-white/5 p-4">
+5. Save and track scan history
+</div>
+
+</div>
+</div>
+
+
+
+<div class="rounded-[28px] bg-white p-6 shadow-xl border border-slate-200">
+
+<h4 class="text-xl font-semibold text-slate-900">
+Supported Crops
+</h4>
+
+<div class="mt-5 grid grid-cols-2 gap-4">
+
+<div class="rounded-2xl bg-slate-50 p-4 hover:bg-emerald-50 transition">
+🍌 Banana
+</div>
+
+<div class="rounded-2xl bg-slate-50 p-4 hover:bg-emerald-50 transition">
+🌶 Chilli
+</div>
+
+<div class="rounded-2xl bg-slate-50 p-4 hover:bg-emerald-50 transition">
+🥜 Groundnut
+</div>
+
+<div class="rounded-2xl bg-slate-50 p-4 hover:bg-emerald-50 transition">
+🥗 Radish
+</div>
+
+<div class="rounded-2xl bg-slate-50 p-4 hover:bg-emerald-50 transition col-span-2">
+🥦 Cauliflower
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+`;
+
+});
+</script>
+
+</body>
+</html>
