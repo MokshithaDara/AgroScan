@@ -1,4 +1,4 @@
-const diseases = [
+﻿const diseases = [
 
 {crop:"Banana",name:"Bract Mosaic Virus Disease",
 desc:"Viral disease causing mosaic patterns on banana leaves.",
@@ -109,8 +109,7 @@ crops.forEach(crop=>{
 
 html+=`
 
-<div onclick="renderDiseases('${crop}')"
-class="bg-white p-8 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition cursor-pointer text-center">
+<div class="crop-card bg-white p-8 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition cursor-pointer text-center" data-crop="${escapeHTML(crop)}">
 
 <h2 class="text-xl font-semibold text-emerald-800">${crop}</h2>
 
@@ -139,8 +138,7 @@ let html=`
 
 <div class="col-span-full mb-4">
 
-<button onclick="renderCrops()"
-class="text-sm text-emerald-700 mb-2">
+<button class="back-button text-sm text-emerald-700 mb-2">
 ← Back to Crops
 </button>
 
@@ -156,8 +154,10 @@ cropDiseases.forEach(d=>{
 
 html+=`
 
-<div onclick="openPopup('${d.name}','${d.desc}','${d.treatment}')"
-class="bg-white p-6 rounded-xl shadow hover:shadow-xl cursor-pointer">
+<div class="disease-card bg-white p-6 rounded-xl shadow hover:shadow-xl cursor-pointer"
+  data-name="${escapeHTML(d.name)}"
+  data-desc="${escapeHTML(d.desc)}"
+  data-treatment="${escapeHTML(d.treatment)}">
 
 <h3 class="text-lg font-semibold">${d.name}</h3>
 
@@ -176,67 +176,105 @@ container.innerHTML=html
 }
 
 
-function initSearch(){
+// ===============================================
+// DELEGATED EVENT LISTENERS
+// ===============================================
 
-const search=document.getElementById("searchInput")
+window.initLibraryInteractions = function () {
+  const pageContent = document.getElementById("pageContent");
 
-search.addEventListener("input",function(){
+  // Guard against early initialization and duplicate listeners
+  if (!pageContent || pageContent.dataset.libraryInit === "1") {
+    return;
+  }
 
-const q=this.value.toLowerCase().trim()
+  pageContent.dataset.libraryInit = "1";
 
-/* if search box empty → show crops again */
+  // Attach delegated listener to stable #pageContent container
+  pageContent.addEventListener("click", (e) => {
+    // Handle crop card clicks
+    const cropCard = e.target.closest(".crop-card");
+    if (cropCard) {
+      const crop = cropCard.dataset.crop;
+      renderDiseases(crop);
+      return;
+    }
 
-if(q===""){
-renderCrops()
-return
+    // Handle disease card clicks
+    const diseaseCard = e.target.closest(".disease-card");
+    if (diseaseCard) {
+      const name = diseaseCard.dataset.name;
+      const desc = diseaseCard.dataset.desc;
+      const treatment = diseaseCard.dataset.treatment;
+      openPopup(name, desc, treatment);
+      return;
+    }
+
+    // Handle back button clicks
+    const backButton = e.target.closest(".back-button");
+    if (backButton) {
+      renderCrops();
+      return;
+    }
+  });
+
+  // Delegated search input handler
+  pageContent.addEventListener("input", (e) => {
+    const searchInput = e.target.closest("#searchInput");
+    if (searchInput) {
+      const q = searchInput.value.toLowerCase().trim();
+
+      // If search box empty, show crops again
+      if (q === "") {
+        renderCrops();
+        return;
+      }
+
+      // Filter and display results
+      const filtered = diseases.filter((d) =>
+        d.name.toLowerCase().includes(q)
+      );
+
+      let html = "";
+
+      filtered.forEach((d) => {
+        html += `
+          <div class="disease-card bg-white p-6 rounded-xl shadow cursor-pointer"
+            data-name="${escapeHTML(d.name)}"
+            data-desc="${escapeHTML(d.desc)}"
+            data-treatment="${escapeHTML(d.treatment)}">
+
+            <h3 class="text-lg font-semibold">${d.name}</h3>
+
+            <p class="text-sm text-gray-600 mt-3">${d.desc}</p>
+
+            <p class="text-xs text-gray-400 mt-2">${d.crop}</p>
+
+          </div>
+        `;
+      });
+
+      document.getElementById("content").innerHTML = html;
+    }
+  });
+};
+
+
+// ===============================================
+// POPUP FUNCTIONS
+// ===============================================
+
+function openPopup(name, desc, treatment) {
+  document.getElementById("popupTitle").innerText = name;
+  document.getElementById("popupDesc").innerText = desc;
+  document.getElementById("popupTreatment").innerText = "Treatment: " + treatment;
+
+  document.getElementById("popup").classList.remove("hidden");
+  document.getElementById("popup").classList.add("flex");
 }
 
-const filtered=diseases.filter(d=>
-d.name.toLowerCase().includes(q)
-)
 
-let html=""
-
-filtered.forEach(d=>{
-
-html+=`
-
-<div onclick="openPopup('${d.name}','${d.desc}','${d.treatment}')"
-class="bg-white p-6 rounded-xl shadow cursor-pointer">
-
-<h3 class="text-lg font-semibold">${d.name}</h3>
-
-<p class="text-sm text-gray-600 mt-3">${d.desc}</p>
-
-<p class="text-xs text-gray-400 mt-2">${d.crop}</p>
-
-</div>
-
-`
-
-})
-
-document.getElementById("content").innerHTML=html
-
-})
-
+function closePopup() {
+  document.getElementById("popup").classList.add("hidden");
 }
 
-
-function openPopup(name,desc,treatment){
-
-document.getElementById("popupTitle").innerText=name
-document.getElementById("popupDesc").innerText=desc
-document.getElementById("popupTreatment").innerText="Treatment: "+treatment
-
-document.getElementById("popup").classList.remove("hidden")
-document.getElementById("popup").classList.add("flex")
-
-}
-
-
-function closePopup(){
-
-document.getElementById("popup").classList.add("hidden")
-
-}

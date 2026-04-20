@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -28,6 +28,7 @@ fontFamily:{poppins:["Poppins","sans-serif"]}
 
 <div id="app"></div>
 
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script src="dashboard.js"></script>
 
@@ -37,7 +38,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 renderShell(
 "Farm Dashboard",
-"View latest scan information and overall scan statistics.",
+"View latest scan information and paginated history.",
 "from-slate-950 via-emerald-900 to-green-700"
 )
 
@@ -84,6 +85,33 @@ Latest Scan
 Recent Scan History
 </h4>
 
+<div class="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+  <button
+    id="historyPrevBtn"
+    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+  >
+    Prev
+  </button>
+
+  <input
+    id="historyPageSlider"
+    type="range"
+    min="1"
+    max="1"
+    value="1"
+    class="h-2 w-48 accent-emerald-700"
+  />
+
+  <button
+    id="historyNextBtn"
+    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+  >
+    Next
+  </button>
+
+  <span id="historyPageInfo" class="text-sm text-slate-600">Page 1 / 1</span>
+</div>
+
 <div id="history" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mt-6"></div>
 
 </div>
@@ -93,6 +121,7 @@ Recent Scan History
 `
 
 loadHistory()
+initHistoryPagination()
 
 })
 
@@ -100,3 +129,5 @@ loadHistory()
 
 </body>
 </html>
+
+

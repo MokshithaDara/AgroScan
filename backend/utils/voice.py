@@ -1,8 +1,13 @@
+import base64
+import io
+import os
+import re
+
 from gtts import gTTS
 from deep_translator import GoogleTranslator
 
 
-def generate_voice(disease, treatment, language):
+def generate_voice(disease, treatment, language, user_id=None):
 
     # ---------------------------------------
     # Healthy crop message
@@ -49,15 +54,25 @@ def generate_voice(disease, treatment, language):
         else:
             translated_text = text
 
-    except:
+    except Exception:
         translated_text = text
 
     # ---------------------------------------
-    # Save audio (overwrite same file)
+    # Generate in-memory audio data URL (no static file creation)
     # ---------------------------------------
-    filename = "voice.mp3"
-
     tts = gTTS(text=translated_text, lang=language)
-    tts.save(filename)
 
-    return filename
+    # Preferred path: in-memory data URL (no file writes).
+    try:
+        buffer = io.BytesIO()
+        tts.write_to_fp(buffer)
+        audio_b64 = base64.b64encode(buffer.getvalue()).decode("ascii")
+        return f"data:audio/mpeg;base64,{audio_b64}"
+    except Exception:
+        # Fallback path: overwrite one stable file (no accumulation).
+        os.makedirs("static", exist_ok=True)
+        safe_user = re.sub(r"[^a-zA-Z0-9_-]", "_", str(user_id or "global"))
+        filename = f"voice_{safe_user}.mp3"
+        filepath = os.path.join("static", filename)
+        tts.save(filepath)
+        return filename
