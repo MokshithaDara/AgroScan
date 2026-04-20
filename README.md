@@ -134,6 +134,11 @@ The frontend defaults to backend API:
 
 This project uses a multi-crop disease image dataset for training and validation. The dataset is not committed to this repository due to size.
 
+## Resources
+
+- Model Colab Link: [Open in Google Colab](https://colab.research.google.com/drive/1sdNVRdto2msJwrKHiZvyfze1mRRfAMmf?usp=sharing)
+- Dataset Used: [Mendeley Dataset](https://data.mendeley.com/datasets/6243z8r6t6/1)
+
 ## Notes
 
 - Do not commit real secrets in `.env`.
