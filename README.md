@@ -1,105 +1,140 @@
-🌱 AgroScan – AI Crop Disease Detection System
+﻿# AgroScan
 
-AgroScan is a full-stack AI application that detects crop diseases from leaf images and provides actionable insights such as treatment recommendations, weather alerts, and voice-based advisory.
+AgroScan is a full-stack crop disease advisory platform built with FastAPI and a browser-based frontend. It predicts crop disease from leaf images and provides treatment guidance, weather cautions, product links, history, and location-aware insights.
 
-🚀 Key Features
-🌿 Crop disease detection using Deep Learning (CNN)
-📸 Image upload for real-time prediction
-💊 Treatment and prevention suggestions
-🌦 Weather-based insights and alerts
-🔊 Voice-based advisory system
-📊 Dashboard with scan history
-📚 Knowledge base for crops and diseases
-🧠 System Workflow
-User uploads a crop leaf image
-Backend preprocesses the image
-Hybrid CNN model predicts the disease
-System fetches:
-Treatment recommendations
-Weather data
-Alerts
-Results are displayed on UI with optional voice output
+## Features
 
-🏗️ System Architecture
+- Leaf image disease prediction using a hybrid CNN pipeline
+- Treatment recommendations and step-by-step guidance
+- Weather and forecast risk checks for a location
+- Alert generation based on disease + weather context
+- Voice advisory generation
+- Scan history and hotspot analytics
+- Multi-page frontend (scan, dashboard, advisory, library)
 
-Frontend (HTML/CSS/JS)
-⬇
-FastAPI Backend
-⬇
-Hybrid CNN Model (TensorFlow/Keras)
-⬇
-Services (Weather API, Database, Voice)
-⬇
-Response to Frontend
+## Tech Stack
 
-📂 Dataset Used
-Multi-Crop Disease Dataset (Mendeley Data)
-🔗 https://data.mendeley.com/datasets/6243z8r6t6/1
-Contains images of multiple crops and diseases
-Includes both healthy and diseased leaf samples
-Covers crops like Banana, Chilli, Groundnut, Radish, Cauliflower
-Used for training and validation of the CNN model
+### Backend
 
-⚠️ Dataset is not included in the repository due to large size
+- Python
+- FastAPI
+- TensorFlow / Keras
+- MongoDB (PyMongo)
+- OpenWeather integration
 
-🤖 CNN Model Methodology
+### Frontend
 
-AgroScan uses a Hybrid CNN Architecture combining:
+- HTML
+- CSS
+- JavaScript
 
-ResNet50
-DenseNet121
-EfficientNet
-🔍 Approach:
-Input images resized and normalized
-Passed through multiple pre-trained CNN models
-Feature extraction from each model
-Features combined using concatenation
-Fully connected layers for classification
-Output layer predicts disease class
+## Project Structure
 
-📊 Algorithm Steps:
-Load and preprocess image
-Apply data augmentation
-Extract features using CNN backbones
-Combine features
-Train classifier using labeled dataset
-Predict disease with probability score
+```text
+AgroScan/
+  backend/
+    app.py
+    main.py
+    database.py
+    requirements.txt
+    .env.example
+    model/
+    static/
+    utils/
+  frontend/
+    index.html
+    home.html
+    dashboard.html
+    advisory.html
+    library.html
+    scan.js
+    app.js
+    config.js
+    style.css
+```
 
-🛠️ Tech Stack
-Frontend
-HTML, CSS, JavaScript
-Backend
-FastAPI (Python)
-Machine Learning
-TensorFlow / Keras (CNN Model)
-Utilities & APIs
-Weather API
-gTTS (Text-to-Speech)
+## Prerequisites
 
-▶️ Setup & Run
-1. Clone the Repository
-git clone https://github.com/MokshithaDara/AgroScan.git
-2. Setup Backend
-cd AgroScan
+- Python 3.10 recommended (TensorFlow 2.12 compatibility)
+- MongoDB instance (local or cloud)
+- OpenWeather API key
+
+## Backend Setup
+
+```powershell
 cd backend
 python -m venv venv
-venv\Scripts\activate
+.\venv\Scripts\activate
 pip install -r requirements.txt
-3. Run Backend
-uvicorn app:app --reload
-4. Run Frontend
-cd ../frontend
+```
+
+Create environment file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Update `.env` values:
+
+- `OPENWEATHER_API_KEY`
+- `MONGO_URL`
+- `MONGO_DB_NAME`
+- `CORS_ORIGINS`
+
+## Run Backend
+
+Option 1:
+
+```powershell
+cd backend
+python main.py
+```
+
+Option 2:
+
+```powershell
+cd backend
+uvicorn app:app --reload --host 127.0.0.1 --port 8000
+```
+
+Backend URLs:
+
+- API base: `http://127.0.0.1:8000`
+- Swagger docs: `http://127.0.0.1:8000/docs`
+
+## Run Frontend
+
+From project root:
+
+```powershell
+cd frontend
 python -m http.server 5500
+```
 
-👉 Open in browser:
-http://localhost:5500
+Open:
 
-🎯 Use Case
+- `http://127.0.0.1:5500/index.html`
 
-AgroScan helps farmers and agricultural stakeholders quickly identify plant diseases and take preventive action, reducing crop loss and improving productivity.
+The frontend defaults to backend API:
 
-🔮 Future Scope
-📱 Mobile application (Android/iOS)
-🌐 Multi-language support
-☁️ Cloud deployment
-🤖 AI chatbot integration
+- `http://127.0.0.1:8000` (configured in `frontend/config.js`)
+
+## Main API Endpoints
+
+- `GET /`
+- `POST /predict`
+- `GET /history/{user_id}`
+- `GET /weather/{location}`
+- `GET /weather?location=...`
+- `GET /forecast-risk/{location}`
+- `GET /analytics/hotspots/{user_id}`
+- `GET /detect-location`
+
+## Dataset
+
+This project uses a multi-crop disease image dataset for training and validation. The dataset is not committed to this repository due to size.
+
+## Notes
+
+- Do not commit real secrets in `.env`.
+- Generated audio files under `backend/static/voice_*.mp3` should generally remain ignored unless intentionally needed.
