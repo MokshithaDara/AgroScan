@@ -1,8 +1,60 @@
-// ======================================================
-// API CONFIG
+﻿// ======================================================
+// UTILITY: ESCAPE HTML TO PREVENT XSS
 // ======================================================
 
-window.API_BASE_URL = "http://127.0.0.1:8000";
+window.escapeHTML = function (text) {
+  const div = document.createElement('div');
+  div.textContent = window.normalizeText(text);
+  return div.innerHTML;
+};
+
+window.normalizeText = function (value) {
+  if (value === null || value === undefined) return "";
+  let text = String(value);
+
+  const replacements = [
+    ["Ã¢â‚¬â€œ", "-"],
+    ["â€“", "-"],
+    ["–", "-"],
+    ["—", "-"],
+    ["Â", ""],
+    ["Ã", ""],
+    ["â€™", "'"],
+    ["â€œ", "\""],
+    ["â€", "\""],
+    ["â€¦", "..."],
+    ["ðŸŒ¡", "Temp"],
+    ["ðŸ’§", "Humidity"],
+    ["â˜ï¸", "Condition"],
+    ["ðŸ“", "Location"],
+    ["ðŸŒ§", "Rain"],
+    ["ðŸ’¨", "Wind"],
+  ];
+
+  for (const [from, to] of replacements) {
+    text = text.split(from).join(to);
+  }
+
+  text = text.replace(/\s{2,}/g, " ").trim();
+  return text;
+};
+
+window.normalizePayload = function (input) {
+  if (Array.isArray(input)) {
+    return input.map((item) => window.normalizePayload(item));
+  }
+  if (input && typeof input === "object") {
+    const output = {};
+    Object.entries(input).forEach(([key, val]) => {
+      output[key] = window.normalizePayload(val);
+    });
+    return output;
+  }
+  if (typeof input === "string") {
+    return window.normalizeText(input);
+  }
+  return input;
+};
 
 
 // ======================================================
@@ -10,17 +62,19 @@ window.API_BASE_URL = "http://127.0.0.1:8000";
 // ======================================================
 
 window.getUserId = function () {
-
-  if (!localStorage.getItem("user_id")) {
-
-    localStorage.setItem(
-      "user_id",
-      "farmer_" + Math.random().toString(36).substring(2, 10)
-    );
-
+  
+  let user_id = localStorage.getItem("user_id");
+  
+  // Validate user_id format (must start with "farmer_" and contain only alphanumeric)
+  const isValidFormat = /^farmer_[a-zA-Z0-9]{8,}$/.test(user_id);
+  
+  if (!user_id || !isValidFormat) {
+    // Generate new valid user_id
+    user_id = "farmer_" + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("user_id", user_id);
   }
 
-  return localStorage.getItem("user_id");
+  return user_id;
 };
 
 
@@ -82,7 +136,7 @@ window.renderShell = function (
 
       <!-- SIDEBAR -->
 
-      <aside class="hidden lg:flex lg:w-72 xl:w-80 min-h-screen flex-col bg-slate-950 text-white">
+      <aside class="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 xl:w-80 min-h-screen flex-col overflow-y-auto bg-slate-950 text-white">
 
         <div class="px-6 py-6 border-b border-white/10">
 
@@ -153,12 +207,12 @@ window.renderShell = function (
 
       <!-- MAIN CONTENT -->
 
-      <div class="flex-1 min-w-0">
+      <div class="flex-1 min-w-0 lg:ml-72 xl:ml-80">
 
 
         <!-- HEADER -->
 
-        <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <header id="shellHeader" class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur transition-transform duration-300">
 
           <div class="flex items-center justify-between px-4 py-4 md:px-6 lg:px-8">
 
@@ -227,18 +281,120 @@ window.renderShell = function (
   `;
 
 
+  // ===============================================
   // MOBILE MENU
+  // ===============================================
 
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+  const mobileMenuId = "mobileMenu";
 
-  if (mobileMenuBtn) {
+  // Inject mobile menu into the DOM
+  const mobileMenuHTML = `
+    <!-- Mobile Menu Overlay -->
+    <div id="${mobileMenuId}" class="fixed inset-0 z-50 lg:hidden hidden">
+      <!-- Backdrop -->
+      <div class="fixed inset-0 z-40 bg-black/50 transition-opacity" id="mobileMenuBackdrop"></div>
+      
+      <!-- Menu Drawer -->
+      <aside class="fixed left-0 top-0 h-screen w-72 z-50 bg-slate-950 text-white overflow-y-auto transition-transform">
+        <div class="px-6 py-6 border-b border-white/10">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-xl">
+                🌿
+              </div>
+              <div>
+                <h1 class="text-xl font-bold tracking-wide">AgroScan</h1>
+              </div>
+            </div>
+            <button id="mobileMenuClose" class="text-2xl">✕</button>
+          </div>
+        </div>
 
+        <!-- Mobile Navigation -->
+        <nav class="px-4 py-6 space-y-2">
+          ${navItems.map(item => `
+            <a
+              href="${item.href}"
+              class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                current === item.href
+                  ? "bg-white text-slate-900 shadow-lg"
+                  : "text-slate-200 hover:bg-white/10"
+              }"
+            >
+              <span>${item.icon}</span>
+              <span>${item.name}</span>
+            </a>
+          `).join("")}
+        </nav>
+
+        <!-- Mobile Farmer Info -->
+        <div class="mt-auto p-4">
+          <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+            <p class="text-sm font-semibold">Farmer ID</p>
+            <p class="mt-2 break-all text-xs text-slate-300">
+              ${getUserId()}
+            </p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  `;
+
+  // Insert mobile menu before the app content closes
+  const mainDiv = app.querySelector(".flex-1");
+  if (mainDiv && mainDiv.nextElementSibling === null) {
+    app.insertAdjacentHTML("beforeend", mobileMenuHTML);
+  }
+
+  // Toggle mobile menu
+  const mobileMenu = document.getElementById(mobileMenuId);
+  const mobileMenuBackdrop = document.getElementById("mobileMenuBackdrop");
+  const mobileMenuClose = document.getElementById("mobileMenuClose");
+
+  if (mobileMenuBtn && mobileMenu) {
     mobileMenuBtn.addEventListener("click", () => {
-
-      alert("Mobile navigation coming soon");
-
+      mobileMenu.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
     });
 
+    // Close menu on backdrop click
+    if (mobileMenuBackdrop) {
+      mobileMenuBackdrop.addEventListener("click", () => {
+        mobileMenu.classList.add("hidden");
+        document.body.style.overflow = "auto";
+      });
+    }
+
+    // Close menu on close button click
+    if (mobileMenuClose) {
+      mobileMenuClose.addEventListener("click", () => {
+        mobileMenu.classList.add("hidden");
+        document.body.style.overflow = "auto";
+      });
+    }
+
+    // Close menu on navigation link click
+    const mobileNavLinks = mobileMenu.querySelectorAll("nav a");
+    mobileNavLinks.forEach(link => {
+      link.addEventListener("click", () => {
+        mobileMenu.classList.add("hidden");
+        document.body.style.overflow = "auto";
+      });
+    });
+  }
+
+  const shellHeader = document.getElementById("shellHeader");
+  if (shellHeader) {
+    const updateHeaderVisibility = () => {
+      if (window.scrollY > 20) {
+        shellHeader.classList.add("-translate-y-full");
+      } else {
+        shellHeader.classList.remove("-translate-y-full");
+      }
+    };
+    window.addEventListener("scroll", updateHeaderVisibility, { passive: true });
+    updateHeaderVisibility();
   }
 
 };

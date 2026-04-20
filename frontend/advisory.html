@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -10,14 +10,19 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="style.css">
 
 </head>
 
-<body>
+<body class="font-poppins bg-slate-50">
 
 <div id="app"></div>
 
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script src="advisory.js"></script>
 
@@ -27,7 +32,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 renderShell(
 "Smart Weather Advisory",
-"Check weather conditions and get crop care suggestions.",
+"Check current weather, 3-7 day disease risk, and spray window recommendations.",
 "from-cyan-900 via-sky-700 to-emerald-700"
 )
 
@@ -35,11 +40,11 @@ const pageContent=document.getElementById("pageContent")
 
 pageContent.innerHTML=`
 
-<section class="grid gap-8 xl:grid-cols-[0.9fr_1.1fr]">
+<section class="space-y-6">
 
 <div class="space-y-6">
 
-<div class="bg-white p-6 rounded-2xl shadow">
+<div class="rounded-3xl border border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-emerald-50 p-6 shadow">
 
 <h3 class="text-xl font-semibold">
 Check Weather
@@ -50,13 +55,13 @@ Select or type a location to view weather conditions and farming insights.
 </p>
 
 
-<div class="mt-4 flex gap-2">
+<div class="mt-5 flex gap-2">
 
 <input
 id="loc"
 list="locationList"
 placeholder="Type village / city"
-class="w-full border rounded-xl px-4 py-3"
+class="w-full rounded-xl border border-cyan-200 bg-white px-4 py-3 shadow-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-100"
 />
 
 <datalist id="locationList">
@@ -86,7 +91,7 @@ class="w-full border rounded-xl px-4 py-3"
 
 <button
 onclick="detectWeatherLocation()"
-class="px-4 py-3 bg-cyan-700 text-white rounded-xl"
+class="rounded-xl bg-cyan-700 px-4 py-3 text-white shadow hover:bg-cyan-800"
 >
 📍
 </button>
@@ -100,35 +105,34 @@ Type any location or auto detect
 
 <button
 onclick="getWeather()"
-class="mt-4 bg-cyan-700 text-white px-6 py-3 rounded-xl w-full"
+class="mt-4 w-full rounded-xl bg-cyan-700 px-6 py-3 text-white shadow hover:bg-cyan-800"
 >
 Check Weather
 </button>
 
+<div id="weather" class="mt-5"></div>
+
+<div class="mt-4 grid grid-cols-[1fr_auto] gap-2">
+  <select id="forecastDays" class="rounded-xl border border-emerald-200 bg-white px-3 py-2 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+    <option value="3">3 Days</option>
+    <option value="4">4 Days</option>
+    <option value="5">5 Days</option>
+    <option value="6">6 Days</option>
+    <option value="7">7 Days</option>
+  </select>
+  <button
+  onclick="getForecastRisk()"
+  class="rounded-xl bg-emerald-700 px-4 py-2 text-white shadow hover:bg-emerald-800"
+  >
+  Forecast Risk
+  </button>
 </div>
 
-
-<div class="bg-white p-6 rounded-2xl shadow">
-
-<h3 class="text-lg font-semibold">
-Advisory Tips
-</h3>
-
-<ul class="mt-4 text-sm text-gray-600 space-y-2">
-
-<li>• High humidity increases fungal disease risk</li>
-<li>• Monitor crops during heavy rainfall</li>
-<li>• Apply preventive spraying if disease risk increases</li>
-<li>• Use weather information before irrigation planning</li>
-
-</ul>
+<div id="forecastRisk" class="mt-5"></div>
 
 </div>
 
 </div>
-
-
-<div id="weather"></div>
 
 </section>
 
@@ -140,3 +144,5 @@ Advisory Tips
 
 </body>
 </html>
+
+
