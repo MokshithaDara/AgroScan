@@ -9,14 +9,17 @@ import io
 import os
 import re
 import logging
+import shutil
+import tempfile
 from typing import List, Optional
 from PIL import Image, UnidentifiedImageError
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+import h5py
 
 from tensorflow.keras.models import load_model
 from tensorflow.keras.applications import ResNet50, DenseNet121, EfficientNetB5
-from tensorflow.keras.layers import GlobalAveragePooling2D
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout, Input
 from tensorflow.keras.models import Model
 from tensorflow.keras.applications.resnet50 import preprocess_input as resnet_pre
 from tensorflow.keras.applications.densenet import preprocess_input as dense_pre
@@ -214,8 +217,80 @@ class_indices = {}
 idx_to_class = {}
 MODEL_READY = False
 
+
+def _build_classifier_from_weights(weights_path: str, num_classes: int = 23):
+    """Rebuild classifier head and load weights by layer name (cross-version safe)."""
+    inp = Input(shape=(5120,), name="input_layer_3")
+    x = Dense(512, activation="relu", name="dense")(inp)
+    x = Dropout(0.5, name="dropout")(x)
+    x = Dense(256, activation="relu", name="dense_1")(x)
+    x = Dropout(0.4, name="dropout_1")(x)
+    out = Dense(num_classes, activation="softmax", name="dense_2")(x)
+    classifier = Model(inp, out, name="hybrid_classifier_head")
+    classifier.load_weights(weights_path, by_name=True)
+    return classifier
+
+
+def _load_model_with_h5_compat(model_path: str):
+    """Load H5 model and patch known Keras config key mismatches when needed."""
+    try:
+        return load_model(model_path, compile=False)
+    except Exception as exc:
+        msg = str(exc)
+        if "Unrecognized keyword arguments: ['batch_shape']" not in msg:
+            raise
+
+        logger.warning(
+            "Detected legacy/new Keras config mismatch for '%s'. Applying compatibility patch for InputLayer batch_shape.",
+            model_path,
+        )
+
+        tmp_file = tempfile.NamedTemporaryFile(suffix=".h5", delete=False)
+        tmp_path = tmp_file.name
+        tmp_file.close()
+
+        try:
+            shutil.copyfile(model_path, tmp_path)
+            with h5py.File(tmp_path, "r+") as h5f:
+                model_config = h5f.attrs.get("model_config")
+                if model_config is None:
+                    raise RuntimeError("model_config attribute not found in H5 file.")
+
+                config_text = (
+                    model_config.decode("utf-8")
+                    if isinstance(model_config, (bytes, bytearray))
+                    else str(model_config)
+                )
+                patched_text = config_text.replace('"batch_shape"', '"batch_input_shape"')
+                if patched_text == config_text:
+                    raise RuntimeError(
+                        "No batch_shape key found in model_config; cannot apply compatibility patch."
+                    )
+
+                if isinstance(model_config, (bytes, bytearray)):
+                    h5f.attrs["model_config"] = patched_text.encode("utf-8")
+                else:
+                    h5f.attrs["model_config"] = patched_text
+
+            try:
+                return load_model(tmp_path, compile=False)
+            except Exception as patched_exc:
+                patched_msg = str(patched_exc)
+                if "Unknown dtype policy: 'DTypePolicy'" in patched_msg:
+                    logger.warning(
+                        "Falling back to manual classifier reconstruction for '%s' due to Keras dtype policy mismatch.",
+                        model_path,
+                    )
+                    return _build_classifier_from_weights(model_path, num_classes=23)
+                raise
+        finally:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
 try:
-    model = load_model("model/model.h5", compile=False)
+    model = _load_model_with_h5_compat("model/model.h5")
     with open("model/cropped_class_indices.json") as f:
         class_indices = json.load(f)
     idx_to_class = {v: k for k, v in class_indices.items()}

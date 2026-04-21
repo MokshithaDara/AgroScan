@@ -7,60 +7,67 @@ from gtts import gTTS
 from deep_translator import GoogleTranslator
 
 
+def _normalize_label(text: str) -> str:
+    value = str(text or "").strip()
+    value = value.replace("_", " ").replace("  ", " ")
+    value = value.replace(" - ", " – ")
+    return value
+
+
+def _build_advisory_script(disease: str, treatment: str) -> str:
+    disease_clean = _normalize_label(disease)
+    treatment_clean = _normalize_label(treatment)
+
+    if disease_clean.lower() in ["healthy", "healthy crop"]:
+        return (
+            "Good news. Your crop appears healthy. "
+            "Please continue regular irrigation, balanced nutrition, and field monitoring. "
+            "Keep checking the leaves every two days for early symptoms."
+        )
+
+    return (
+        f"We detected {disease_clean}. "
+        f"Recommended treatment: {treatment_clean}. "
+        "Please apply the treatment at the right dosage and follow safety instructions. "
+        "Monitor the crop after application and repeat only if needed."
+    )
+
+
+def _prepare_tts_text(text: str) -> str:
+    # Keep sentence rhythm clear so gTTS sounds less abrupt.
+    value = re.sub(r"\s+", " ", str(text or "")).strip()
+    value = value.replace(";", ". ")
+    value = value.replace(":", ". ")
+    value = value.replace("..", ".")
+    return value
+
+
 def generate_voice(disease, treatment, language, user_id=None):
+    # Ensure supported language code.
+    lang = str(language or "en").lower().strip()
+    if lang not in {"en", "te", "hi"}:
+        lang = "en"
 
-    # ---------------------------------------
-    # Healthy crop message
-    # ---------------------------------------
-    if disease.lower() in ["healthy", "healthy crop"]:
+    base_text = _build_advisory_script(disease, treatment)
 
-        text = (
-            "Good news! The crop appears healthy. "
-            "Continue proper irrigation, fertilization, and regular monitoring "
-            "to maintain plant health."
-        )
-
-    # ---------------------------------------
-    # Disease detected message
-    # ---------------------------------------
-    else:
-
-        text = (
-            f"This plant is affected by {disease}. "
-            f"Recommended treatment is {treatment}. "
-            "Please apply the treatment as soon as possible."
-        )
-
-    # ---------------------------------------
-    # Language mapping
-    # ---------------------------------------
-    language_map = {
-        "en": "english",
-        "te": "telugu",
-        "hi": "hindi"
-    }
-
-    # ---------------------------------------
-    # Translate if needed
-    # ---------------------------------------
+    # Translate if needed (gTTS expects language codes).
     try:
-        if language != "en":
-
-            translated_text = GoogleTranslator(
-                source="auto",
-                target=language_map.get(language, "english")
-            ).translate(text)
-
+        if lang != "en":
+            translated_text = GoogleTranslator(source="auto", target=lang).translate(base_text)
         else:
-            translated_text = text
-
+            translated_text = base_text
     except Exception:
-        translated_text = text
+        translated_text = base_text
 
-    # ---------------------------------------
-    # Generate in-memory audio data URL (no static file creation)
-    # ---------------------------------------
-    tts = gTTS(text=translated_text, lang=language)
+    spoken_text = _prepare_tts_text(translated_text)
+
+    # Slightly better accents for a farmer-focused India audience.
+    tld_map = {
+        "en": "co.in",
+        "hi": "co.in",
+        "te": "co.in",
+    }
+    tts = gTTS(text=spoken_text, lang=lang, tld=tld_map.get(lang, "co.in"), slow=False)
 
     # Preferred path: in-memory data URL (no file writes).
     try:

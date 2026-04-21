@@ -144,6 +144,23 @@ pageContent.innerHTML=`
   </p>
 </div>
 
+<div class="mt-4">
+  <label for="voiceLanguage" class="text-sm font-medium text-slate-700">
+    Voice Language
+  </label>
+  <select
+    id="voiceLanguage"
+    class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+  >
+    <option value="en">English</option>
+    <option value="te">Telugu</option>
+    <option value="hi">Hindi</option>
+  </select>
+  <p class="mt-2 text-xs text-slate-500">
+    Select language before scanning to generate voice advice in your preferred language.
+  </p>
+</div>
+
 <div class="mt-6 flex flex-wrap gap-3">
   <button
   id="scanBtn"

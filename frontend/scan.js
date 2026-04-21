@@ -210,8 +210,10 @@ function resetScanForm() {
   const uploadDropHint = document.getElementById("uploadDropHint")
   const result = document.getElementById("result")
   const locationInput = document.getElementById("location")
+  const voiceLanguageInput = document.getElementById("voiceLanguage")
 
   if (locationInput) locationInput.value = ""
+  if (voiceLanguageInput) voiceLanguageInput.value = "en"
 
   if (imageInput) imageInput.value = ""
 
@@ -247,14 +249,16 @@ async function predict() {
   const imageInput = document.getElementById("imageInput")
   const scanBtn = document.getElementById("scanBtn")
   const locationInput = document.getElementById("location")
+  const voiceLanguageInput = document.getElementById("voiceLanguage")
 
-  if (!imageInput || !scanBtn || !locationInput) {
+  if (!imageInput || !scanBtn || !locationInput || !voiceLanguageInput) {
     alert("Form elements not found")
     return
   }
 
   const file = imageInput?.files?.[0]
   const location = locationInput.value.trim()
+  const language = (voiceLanguageInput.value || "en").trim()
   const user_id = getUserId()
 
   if (!file) {
@@ -271,6 +275,7 @@ async function predict() {
 
   formData.append("file", file)
   formData.append("location", location)
+  formData.append("language", language)
   formData.append("user_id", user_id)
 
   const result = document.getElementById("result")
