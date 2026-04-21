@@ -220,7 +220,7 @@ AgroScan/
 - Multilingual voice expansion with richer local dialect support.
 - Farmer chatbot for symptom Q&A and follow-up guidance.
 - Disease severity estimation and stage-wise treatment planning.
-- Fertilizer/pesticide dosage optimization by crop growth stage.
+- Fertilizer/pesticide dosage optimization by crop growth stage
 - Live production deployment with geo-tagged outbreak monitoring.
 
 ---
