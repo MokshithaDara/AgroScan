@@ -1,145 +1,227 @@
-﻿# AgroScan
+﻿# AgroScan – AI Crop Disease Detection and Advisory System
 
-AgroScan is a full-stack crop disease advisory platform built with FastAPI and a browser-based frontend. It predicts crop disease from leaf images and provides treatment guidance, weather cautions, product links, history, and location-aware insights.
+Designed and developed an end-to-end AI crop disease detection system for multi-crop leaf analysis, treatment support, weather-aware alerts, and voice advisory.
+Built and integrated the frontend, FastAPI backend, hybrid CNN inference pipeline, external APIs, and MongoDB-backed history tracking into one deployable workflow.
 
-## Features
+## Problem Statement
 
-- Leaf image disease prediction using a hybrid CNN pipeline
-- Treatment recommendations and step-by-step guidance
-- Weather and forecast risk checks for a location
-- Alert generation based on disease + weather context
-- Voice advisory generation
-- Scan history and hotspot analytics
-- Multi-page frontend (scan, dashboard, advisory, library)
+Farmers often rely on manual disease identification, which is slow and error-prone in real field conditions. Delayed diagnosis leads to yield loss, incorrect pesticide usage, and poor crop management decisions. AgroScan addresses this by providing instant AI-based disease detection with actionable treatment and weather context.
+
+## Key Features
+
+- Leaf image disease prediction using a hybrid CNN (ResNet50 + DenseNet121 + EfficientNetB5 fusion)
+- Multi-crop support (Banana, Chilli, Groundnut, Radish, Cauliflower)
+- Treatment recommendation with practical intervention steps
+- Weather advisory and disease-risk context via OpenWeatherMap
+- Multilingual voice advisory (Telugu, Hindi, English) using TTS
+- Prediction history and dashboard analytics using MongoDB
+- Clean web UI for home, scan, results, advisory, dashboard, and disease library
+
+## System Architecture
+
+![System Architecture](assets/system-architecture.png)
+
+```mermaid
+flowchart LR
+    U[User uploads leaf image] --> F[Frontend Web UI]
+    F --> B[FastAPI Backend /predict]
+    B --> P[Preprocess image: resize + normalize]
+    P --> M[Hybrid CNN Prediction]
+    M --> T[Fetch treatment from MongoDB]
+    M --> W[Fetch weather + alerts from OpenWeather]
+    M --> V[Generate voice advisory using gTTS]
+    T --> R[Aggregate final response]
+    W --> R
+    V --> R
+    R --> UI[Prediction result shown in UI + history saved]
+```
 
 ## Tech Stack
 
-### Backend
+- Frontend: HTML, CSS, JavaScript
+- Backend: FastAPI, Uvicorn, Python
+- ML/DL: TensorFlow/Keras, OpenCV, NumPy
+- Database: MongoDB (PyMongo)
+- External APIs/Services: OpenWeatherMap API, gTTS
+- Utilities: geopy, python-dotenv
 
-- Python
-- FastAPI
-- TensorFlow / Keras
-- MongoDB (PyMongo)
-- OpenWeather integration
+## Dataset Used
 
-### Frontend
+- Dataset: **Mendeley Multi-Crop Plant Disease Dataset**
+- Source: https://data.mendeley.com/datasets/6243z8r6t6/1
+- Crops covered: Banana, Chilli, Groundnut, Radish, Cauliflower
+- Class coverage: **23 total classes** (22 disease classes + 1 healthy class)
+- Disease groups include examples such as Sigatoka variants, Anthracnose, Leaf Curl, Rust, Mosaic Virus, Downy Mildew, Black Rot, and Bacterial Spot.
 
-- HTML
-- CSS
-- JavaScript
+Crop-wise class distribution (from project documentation):
 
-## Project Structure
+- Banana: 8 disease classes
+- Chilli: 4 disease classes
+- Groundnut: 4 disease classes
+- Radish: 3 disease classes
+- Cauliflower: 3 disease classes
+- Plus healthy class: 1
 
-```text
-AgroScan/
-  backend/
-    app.py
-    main.py
-    database.py
-    requirements.txt
-    .env.example
-    model/
-    static/
-    utils/
-  frontend/
-    index.html
-    home.html
-    dashboard.html
-    advisory.html
-    library.html
-    scan.js
-    app.js
-    config.js
-    style.css
-```
+## Model Details
 
-## Prerequisites
+- Model type: **Hybrid CNN using transfer learning + feature fusion**
+- Backbones: ResNet50, DenseNet121, EfficientNetB5 (`include_top=False`, ImageNet weights)
+- Input size: `224 x 224` leaf image
+- Preprocessing:
+- Resize to `224x224`
+- Color conversion `BGR -> RGB`
+- Architecture-specific normalization (ResNet50 mean-centering, DenseNet121 [0,1], EfficientNetB5 [-1,1])
+- Augmentation used:
+- Random horizontal/vertical flip
+- Rotation (+/-30 degrees)
+- Width/height shift (+/-20%)
+- Zoom (+/-20%)
+- Shear (+/-15%)
+- Brightness adjustment (+/-20%)
+- Feature fusion:
+- ResNet50 GAP output: 2048-dim
+- DenseNet121 GAP output: 1024-dim
+- EfficientNetB5 GAP output: 2048-dim
+- Concatenated feature vector: **5120-dim**
+- Classification head:
+- Dense(512, ReLU) + Dropout(0.5)
+- Dense(256, ReLU) + Dropout(0.4)
+- Dense(23, Softmax)
+- Output format: top predicted disease class + confidence, with treatment/weather/voice payload in API response
 
-- Python 3.10 recommended (TensorFlow 2.12 compatibility)
-- MongoDB instance (local or cloud)
-- OpenWeather API key
+## Workflow
 
-## Backend Setup
+![Workflow Diagram](assets/workflow-diagram.jpg)
 
-```powershell
+1. Upload leaf image in the Crop Scanner page.
+2. FastAPI receives and validates image/location/language inputs.
+3. Backend preprocesses image and runs Hybrid CNN prediction.
+4. System predicts disease class with confidence score.
+5. Backend fetches treatment guidance and product links.
+6. Backend fetches weather insights and generates advisory alerts.
+7. TTS engine generates multilingual voice advisory.
+8. Results are shown on UI and saved into prediction history.
+
+## Results
+
+### Model Performance
+
+- Training Accuracy: **97.35%**
+- Validation Accuracy: **94.89%**
+- Test Accuracy: **94.89%**
+- Training Loss: **0.0947**
+- Validation Loss: **0.2076**
+- Final Test Loss: **0.1818**
+- Weighted F1-Score: **0.94**
+
+### Sample Prediction
+
+- Example from system testing: `Chilli – Whitefly` with treatment suggestion, weather snapshot, and voice advisory in one output flow.
+
+### Limitations (Real-World)
+
+- Model may confuse visually similar diseases across related classes.
+- Performance can drop on low-light, blurred, or noisy field images.
+- Internet is currently required for weather and cloud database access.
+- Real-field robustness still benefits from larger and more diverse on-farm data.
+
+### Demo Proof
+
+- GitHub Repository: https://github.com/MokshithaDara/AgroScan
+- YouTube Demo: https://youtu.be/EVTmfIjDqBU
+- Model Colab (training/reference): https://colab.research.google.com/drive/1sdNVRdto2msJwrKHiZvyfze1mRRfAMmf?usp=sharing
+
+## Screenshots
+
+### Home Screen
+
+![Home Screen](screenshots/home-screen.png)
+
+### Scan/Upload Page
+
+![Scan Upload](screenshots/scan-upload-page.png)
+
+### Prediction Result
+
+![Prediction Result](screenshots/prediction-result.png)
+
+### Treatment Recommendation (Treatment + Weather + Voice)
+
+![Treatment Recommendation](screenshots/treatment-weather-voice.png)
+
+### Dashboard/History Page
+
+![Dashboard History](screenshots/dashboard-history.png)
+
+## Installation Steps
+
+### 1) Clone and Backend Setup
+
+```bash
+git clone https://github.com/MokshithaDara/AgroScan.git
+cd AgroScan
 cd backend
 python -m venv venv
-.\venv\Scripts\activate
+# Windows PowerShell
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-Create environment file:
+### 2) Environment Configuration (`.env`)
 
-```powershell
-Copy-Item .env.example .env
+Create `backend/.env` (or copy from `backend/.env.example`) and set:
+
+```env
+OPENWEATHER_API_KEY=your_key
+MONGO_URL=your_mongodb_url
+MONGO_DB_NAME=agroscan_db
+CORS_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
 ```
 
-Update `.env` values:
+### 3) Run Backend
 
-- `OPENWEATHER_API_KEY`
-- `MONGO_URL`
-- `MONGO_DB_NAME`
-- `CORS_ORIGINS`
-
-## Run Backend
-
-Option 1:
-
-```powershell
+```bash
 cd backend
 python main.py
 ```
 
-Option 2:
+### 4) Run Frontend
 
-```powershell
-cd backend
-uvicorn app:app --reload --host 127.0.0.1 --port 8000
-```
-
-Backend URLs:
-
-- API base: `http://127.0.0.1:8000`
-- Swagger docs: `http://127.0.0.1:8000/docs`
-
-## Run Frontend
-
-From project root:
-
-```powershell
+```bash
 cd frontend
 python -m http.server 5500
 ```
 
 Open:
 
-- `http://127.0.0.1:5500/index.html`
+- Frontend: `http://127.0.0.1:5500/index.html`
+- Backend API: `http://127.0.0.1:8000`
+- Swagger Docs: `http://127.0.0.1:8000/docs`
 
-The frontend defaults to backend API:
+### 5) Clean Project Structure
 
-- `http://127.0.0.1:8000` (configured in `frontend/config.js`)
+```text
+AgroScan/
+  frontend/
+  backend/
+  model/
+  assets/
+  screenshots/
+  README.md
+  .gitignore
+  requirements.txt
+```
 
-## Main API Endpoints
+## Future Scope
 
-- `GET /`
-- `POST /predict`
-- `GET /history/{user_id}`
-- `GET /weather/{location}`
-- `GET /weather?location=...`
-- `GET /forecast-risk/{location}`
-- `GET /analytics/hotspots/{user_id}`
-- `GET /detect-location`
+- Top-3 predictions with uncertainty estimation for safer advisory.
+- Grad-CAM explainability to visualize disease regions.
+- Offline/edge inference for low-connectivity farm areas.
+- Multilingual voice expansion with richer local dialect support.
+- Farmer chatbot for symptom Q&A and follow-up guidance.
+- Disease severity estimation and stage-wise treatment planning.
+- Fertilizer/pesticide dosage optimization by crop growth stage.
+- Live production deployment with geo-tagged outbreak monitoring.
 
-## Dataset
+---
 
-This project uses a multi-crop disease image dataset for training and validation. The dataset is not committed to this repository due to size.
-
-## Resources
-
-- Model Colab Link: [Open in Google Colab](https://colab.research.google.com/drive/1sdNVRdto2msJwrKHiZvyfze1mRRfAMmf?usp=sharing)
-- Dataset Used: [Mendeley Dataset](https://data.mendeley.com/datasets/6243z8r6t6/1)
-
-## Notes
-
-- Do not commit real secrets in `.env`.
-- Generated audio files under `backend/static/voice_*.mp3` should generally remain ignored unless intentionally needed.

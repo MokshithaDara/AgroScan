@@ -1,4 +1,5 @@
 venv/
+backend/venv/
 __pycache__/
 .env
 *.pyc
@@ -6,4 +7,7 @@ __pycache__/
 node_modules/
 backend/static/voice_*.mp3
 backend/.env
+project_doc_extracted.txt
+screenshots/page_*.png
+screenshots/page_*.jpg
 
