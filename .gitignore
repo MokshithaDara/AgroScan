@@ -10,4 +10,6 @@ backend/.env
 project_doc_extracted.txt
 screenshots/page_*.png
 screenshots/page_*.jpg
+backend/data/*.db
+tests/.tmp_agroscan.db
 

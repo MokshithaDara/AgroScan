@@ -18,7 +18,7 @@ scans_collection = None
 
 if not MONGO_URL:
     logger.warning(
-        "MONGO_URL is not set. Running without database; history APIs will be unavailable."
+        "MONGO_URL is not set. Using SQLite fallback for history/dashboard."
     )
 else:
     try:
@@ -33,7 +33,7 @@ else:
         scans_collection.create_index([("user_id", ASCENDING), ("date", DESCENDING)])
     except PyMongoError as e:
         logger.error(
-            "MongoDB connection failed. Running without database support: %s",
+            "MongoDB connection failed. Using SQLite fallback for history/dashboard: %s",
             e,
         )
         scans_collection = None

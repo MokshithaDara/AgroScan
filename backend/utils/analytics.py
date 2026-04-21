@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from database import scans_collection
 from utils.location import get_coordinates
+from utils.sqlite_history_store import read_user_scans
 
 GEO_CACHE = {}
 
@@ -31,20 +32,13 @@ def _coords_for_location(location):
 
 def get_hotspot_analytics(user_id, limit=300):
     if scans_collection is None:
-        return {
-            "total_scans": 0,
-            "hotspots": [],
-            "clusters": [],
-            "district_trends": [],
-            "top_diseases": [],
-            "weekly_trend": [],
-        }
-
-    rows = list(
-        scans_collection.find({"user_id": user_id}, {"_id": 0})
-        .sort("date", -1)
-        .limit(limit)
-    )
+        rows = read_user_scans(user_id)[:limit]
+    else:
+        rows = list(
+            scans_collection.find({"user_id": user_id}, {"_id": 0})
+            .sort("date", -1)
+            .limit(limit)
+        )
 
     if not rows:
         return {

@@ -1,7 +1,7 @@
 ﻿# AgroScan – AI Crop Disease Detection and Advisory System
 
 Designed and developed an end-to-end AI crop disease detection system for multi-crop leaf analysis, treatment support, weather-aware alerts, and voice advisory.
-Built and integrated the frontend, FastAPI backend, hybrid CNN inference pipeline, external APIs, and MongoDB-backed history tracking into one deployable workflow.
+Built and integrated the frontend, FastAPI backend, hybrid CNN inference pipeline, external APIs, and MongoDB-first history tracking with SQLite fallback into one deployable workflow.
 
 ## Problem Statement
 
@@ -14,7 +14,7 @@ Farmers often rely on manual disease identification, which is slow and error-pro
 - Treatment recommendation with practical intervention steps
 - Weather advisory and disease-risk context via OpenWeatherMap
 - Multilingual voice advisory (Telugu, Hindi, English) using TTS
-- Prediction history and dashboard analytics using MongoDB
+- Prediction history and dashboard analytics using MongoDB (primary) with SQLite fallback
 - Clean web UI for home, scan, results, advisory, dashboard, and disease library
 
 ## System Architecture
@@ -88,6 +88,12 @@ Crop-wise class distribution (from project documentation):
 - Dense(256, ReLU) + Dropout(0.4)
 - Dense(23, Softmax)
 - Output format: top predicted disease class + confidence, with treatment/weather/voice payload in API response
+
+### Model Weights Placeholder
+
+- Trained weights are intentionally not committed to the repository.
+- Place the downloaded/exported weights at: `backend/model/model.h5`
+- Use this Colab link to train/export the model artifact: https://colab.research.google.com/drive/1sdNVRdto2msJwrKHiZvyfze1mRRfAMmf?usp=sharing
 
 ## Workflow
 
@@ -176,7 +182,14 @@ OPENWEATHER_API_KEY=your_key
 MONGO_URL=your_mongodb_url
 MONGO_DB_NAME=agroscan_db
 CORS_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
+SQLITE_PATH=data/agroscan.db
 ```
+
+MongoDB fallback:
+
+- MongoDB remains the primary database when `MONGO_URL` is configured and reachable.
+- If `MONGO_URL` is missing or MongoDB is unreachable, AgroScan automatically uses local SQLite storage for history/dashboard at `SQLITE_PATH`.
+- This enables evaluator-friendly local runs without provisioning MongoDB first.
 
 ### 3) Run Backend
 
@@ -198,7 +211,14 @@ Open:
 - Backend API: `http://127.0.0.1:8000`
 - Swagger Docs: `http://127.0.0.1:8000/docs`
 
-### 5) Clean Project Structure
+### 5) Run Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+### 6) Clean Project Structure
 
 ```text
 AgroScan/
@@ -207,9 +227,11 @@ AgroScan/
   model/
   assets/
   screenshots/
+  tests/
   README.md
   .gitignore
   requirements.txt
+  requirements-dev.txt
 ```
 
 ## Future Scope
@@ -224,4 +246,3 @@ AgroScan/
 - Live production deployment with geo-tagged outbreak monitoring.
 
 ---
-

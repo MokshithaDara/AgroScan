@@ -1,5 +1,6 @@
 from datetime import datetime
 from database import scans_collection
+from utils.sqlite_history_store import append_scan, read_user_scans
 
 
 def save_scan(
@@ -10,9 +11,6 @@ def save_scan(
     treatment_steps=None,
     products_recommended=None,
 ):
-    if scans_collection is None:
-        return
-
     safe_treatment_steps = treatment_steps or []
     safe_products = products_recommended or []
 
@@ -26,12 +24,27 @@ def save_scan(
         "products_recommended": safe_products,
     }
 
+    if scans_collection is None:
+        local_record = dict(record)
+        local_record["date"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        append_scan(local_record)
+        return
+
     scans_collection.insert_one(record)
 
 
 def get_history(user_id, limit=10, skip=0):
     if scans_collection is None:
-        return []
+        rows = read_user_scans(user_id)
+        sliced = rows[max(0, skip): max(0, skip) + limit]
+        for row in sliced:
+            if "treatment" not in row:
+                row["treatment"] = ""
+            if "treatment_steps" not in row or not isinstance(row.get("treatment_steps"), list):
+                row["treatment_steps"] = []
+            if "products_recommended" not in row or not isinstance(row.get("products_recommended"), list):
+                row["products_recommended"] = []
+        return sliced
 
     data = list(
         scans_collection.find(
@@ -56,5 +69,5 @@ def get_history(user_id, limit=10, skip=0):
 
 def get_total_scans(user_id):
     if scans_collection is None:
-        return 0
+        return len(read_user_scans(user_id))
     return scans_collection.count_documents({"user_id": user_id})
