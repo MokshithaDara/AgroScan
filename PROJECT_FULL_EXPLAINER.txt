@@ -1,0 +1,455 @@
+AGROSCAN PROJECT - FULL CROSS-DEPARTMENT EXPLAINER
+Document type: Plain text handover for non-engineering and mixed teams
+Last updated from codebase on: April 22, 2026
+Repository path: C:\Users\HP\Downloads\agr
+
+====================================================================
+1) EXECUTIVE SUMMARY (IN SIMPLE WORDS)
+====================================================================
+AgroScan is a web application for farmers and agronomy workflows.
+A user uploads a crop leaf image, enters a location, and the system returns:
+- Disease prediction (or healthy status)
+- Practical treatment steps
+- Weather context and caution notes
+- Product suggestions with external buy/search links
+- Voice advice in English, Telugu, or Hindi
+- Saved scan history tied to a farmer ID
+
+Think of AgroScan as a digital crop assistant with five main jobs:
+1. Detect: identify disease from image
+2. Guide: suggest what to do next
+3. Contextualize: adjust guidance using weather
+4. Communicate: provide voice output in local language options
+5. Track: maintain scan records and dashboard history
+
+====================================================================
+2) WHO THIS APP IS FOR
+====================================================================
+Primary users:
+- Farmers or field operators who need quick disease checks
+- Agronomy support staff who need structured treatment suggestions
+- Project evaluators or demo audiences who need visible AI + advisory workflow
+
+Internal stakeholders who can use this document:
+- Product: understand feature boundaries and roadmap gaps
+- Operations: understand runtime dependencies and failure behavior
+- QA: understand flows, validations, edge cases, and test coverage
+- Management: understand value, risk, and deployment readiness
+
+====================================================================
+3) WHAT USERS SEE (FRONTEND PAGES)
+====================================================================
+Frontend is a multi-page web UI in frontend/.
+It uses HTML + TailwindCSS + JavaScript (no React/Vue framework).
+A shared shell (sidebar, header, farmer ID, mobile menu) is built in frontend/app.js.
+
+Pages:
+1. Home (frontend/home.html)
+- Overview of workflow and supported crops
+- Entry points to scanner, dashboard, advisory, library
+
+2. Crop Scanner (frontend/index.html + frontend/scan.js)
+- Upload image (max 5MB)
+- Enter location manually or auto-detect by browser geolocation
+- Choose voice language (en/te/hi)
+- Click Scan Crop to call backend /predict
+- Shows result cards and accordions:
+  - Disease summary
+  - About Disease
+  - Treatment Plan
+  - Weather Insights
+  - Field Application Guide
+  - Recommended Products
+  - Voice advice player
+
+3. Dashboard (frontend/dashboard.html + frontend/dashboard.js)
+- Shows total scans, latest disease label
+- Paginated history list (9 per page)
+- Slider + prev/next navigation
+- Modal popup for detailed scan info (treatment steps and product list)
+
+4. Advisory (frontend/advisory.html + frontend/advisory.js)
+- Standalone weather check for any location
+- Current weather card with risk scoring
+- 3 to 7 day forecast-risk UI
+- Spray timing suggestions and preventive actions
+
+5. Knowledge Base (frontend/library.html + frontend/library.js)
+- Static crop->disease lookup cards
+- Search support
+- Popup with disease description + treatment hint
+
+====================================================================
+4) HOW THE SYSTEM IS BUILT (HIGH LEVEL ARCHITECTURE)
+====================================================================
+Layer A: Browser UI
+- Collects input and displays structured cards
+- Calls backend REST endpoints using fetch()
+
+Layer B: Backend API (FastAPI)
+- Validates user input
+- Loads AI model and runs prediction
+- Calls utility modules for treatment/weather/products/voice/history
+- Returns one combined JSON response to UI
+
+Layer C: External services
+- OpenWeatherMap APIs for geocoding + weather + forecast
+- gTTS and GoogleTranslator for speech generation/translation
+
+Layer D: Storage
+- Primary: MongoDB scans collection
+- Fallback: SQLite file when Mongo is absent/unreachable
+
+====================================================================
+5) BACKEND ENTRYPOINTS AND RESPONSIBILITIES
+====================================================================
+Main backend files:
+- backend/main.py: server launcher (uvicorn)
+- backend/app.py: all API routes and prediction orchestration
+- backend/database.py: Mongo connection setup + fallback behavior
+
+Exposed API routes (from backend/app.py):
+1. GET /
+- Health/info endpoint: returns "AgroScan API Running"
+
+2. POST /predict
+Input form fields:
+- file (image)
+- location (string)
+- language (en/te/hi)
+- user_id (must match pattern farmer_[a-zA-Z0-9]{8,})
+
+Processing flow:
+- Input validation
+- Leaf image validation using color/edge heuristics
+- Preprocess image to 224x224
+- Extract hybrid features (ResNet50 + DenseNet121 + EfficientNetB5)
+- Classify using pre-trained head from model.h5
+- Fetch weather for location
+- Build treatment plan
+- Build alerts and product links
+- Save scan history
+- Generate voice advice
+- Return combined result JSON
+
+3. GET /history/{user_id}
+- Paginated history retrieval
+- Returns total scans and history records
+
+4. GET /weather/{location}
+5. GET /weather?location=...
+- Current weather + simple advisory message
+
+6. GET /forecast-risk/{location}?days=...
+- Forecast risk summary by day + spray windows
+
+7. GET /analytics/hotspots/{user_id}
+- Location and disease trend analytics from history
+
+8. GET /detect-location?lat=...&lon=...
+- Reverse geocoding to city name
+
+====================================================================
+6) AI/ML PIPELINE EXPLAINED FOR NON-ML TEAMS
+====================================================================
+Model files:
+- Expected weight file: backend/model/model.h5 (not committed)
+- Class map: backend/model/cropped_class_indices.json
+
+How prediction works:
+1. Uploaded image is resized to a standard size (224x224)
+2. Three different pre-trained visual backbones extract features
+3. Those feature vectors are joined (concatenated)
+4. A classifier head predicts one of 23 classes
+5. Top class is returned with confidence percentage
+
+Important practical note:
+- UI language says "disease and severity" in some places.
+- Actual backend output provides confidence, not an explicit severity class.
+
+Model availability behavior:
+- If model init fails, /predict returns HTTP 503 with clear message.
+
+====================================================================
+7) WEATHER + LOCATION + ADVISORY LOGIC
+====================================================================
+Files:
+- backend/utils/location.py
+- backend/utils/weather.py
+- backend/utils/forecast.py
+- backend/utils/alerts.py
+- frontend/advisory.js
+
+What happens:
+- Location name -> coordinates via OpenWeather geocoding
+- Coordinates -> current weather data
+- Forecast endpoint computes disease-risk level from humidity/rain/temp
+- UI converts data into decision cards and action bullets
+
+Known behavior detail:
+- Advisory UI allows selecting 3..7 days.
+- Backend route accepts 1..7, but utility currently clamps to max 5 days.
+- Effect: requests above 5 days return only available up to 5-day horizon.
+
+====================================================================
+8) TREATMENT + PRODUCTS + VOICE
+====================================================================
+Treatment logic files:
+- backend/utils/treatment.py
+- frontend/scan.js (presentation layer and disease profile text)
+
+Treatment behavior:
+- Disease-specific base guidance from internal dictionaries
+- Weather-based caution lines appended dynamically
+- Treatment summary and step list returned
+
+Product logic:
+- backend/utils/products.py
+- Maps disease -> 3 product archetypes
+- Generates links for Amazon, Flipkart, and generic agri-store search
+- Includes "why/when/when not to use/dose" metadata
+
+Voice logic:
+- backend/utils/voice.py
+- Script generated from disease + treatment text
+- Optional translation (te/hi)
+- TTS generated with gTTS
+- Primary return format is data URL audio (base64)
+- Fallback: static file in backend/static/
+
+====================================================================
+9) HISTORY, DASHBOARD, AND ANALYTICS
+====================================================================
+History files:
+- backend/utils/history.py
+- backend/utils/sqlite_history_store.py
+- frontend/dashboard.js
+
+Data saved per scan:
+- user_id
+- date/time
+- location
+- disease
+- treatment
+- treatment_steps[]
+- products_recommended[]
+
+Storage strategy:
+- MongoDB first (if configured and reachable)
+- SQLite fallback if Mongo missing/unreachable
+- This makes local demos easier with minimal setup
+
+Dashboard behavior:
+- Loads user history with pagination
+- Shows high-level counters and list cards
+- Modal shows deeper detail for each scan
+
+Analytics endpoint behavior:
+- Groups by location and disease
+- Computes hotspot lists and simple trend direction
+- Uses geocoding per location for cluster mapping
+
+====================================================================
+10) FRONTEND SECURITY/ROBUSTNESS PATTERNS
+====================================================================
+Sanitization:
+- app.js includes escapeHTML() to reduce XSS risk in rendered content
+
+Input checks in scanner UI:
+- File type must be image/*
+- File size <= 5MB
+- Location required
+
+Caching:
+- scan.js caches recent scan payloads in localStorage (TTL 5 min)
+- advisory.js caches weather and forecast payloads (TTL 10 min)
+
+UX resilience:
+- Loading skeletons/spinners
+- Error banners with simple troubleshooting hints
+- Safe fallback text when fields are missing
+
+====================================================================
+11) DATA CONTRACTS (SIMPLIFIED)
+====================================================================
+/predict response includes:
+- scan: {location, disease, confidence}
+- treatment: string summary
+- treatment_steps: string[]
+- weather_cautions: string[]
+- weather: {temperature, humidity, condition}
+- alerts: string[]
+- products: [] with link metadata
+- media: {voice, heatmap}
+
+/history response includes:
+- total_scans
+- current_page
+- page_size
+- total_pages
+- history[] records
+
+====================================================================
+12) CONFIGURATION AND ENVIRONMENT
+====================================================================
+Key environment values (backend/.env):
+- OPENWEATHER_API_KEY
+- MONGO_URL
+- MONGO_DB_NAME
+- CORS_ORIGINS
+- SQLITE_PATH
+
+Frontend API base URL:
+- frontend/config.js default is http://127.0.0.1:8000
+- Can be overridden via window.__AGROSCAN_CONFIG__.apiBaseUrl
+
+Required runtime dependencies:
+- Python backend stack from backend/requirements.txt
+- Browser for frontend static pages
+
+====================================================================
+13) HOW TO RUN (NON-DEV FRIENDLY SUMMARY)
+====================================================================
+1. Install Python dependencies in backend/ and activate venv.
+2. Add environment keys in backend/.env.
+3. Start backend with python main.py from backend/.
+4. Start frontend static server in frontend/ (for example python -m http.server 5500).
+5. Open home page and run scan flow.
+
+Main URLs in local run:
+- Frontend: http://127.0.0.1:5500/home.html (or index.html)
+- Backend docs: http://127.0.0.1:8000/docs
+
+====================================================================
+14) TESTING STATUS
+====================================================================
+Available tests in tests/:
+- test_history_local.py: validates local SQLite fallback and pagination path
+- test_treatment.py: validates weather caution behavior and fallback treatment plan
+
+What tests cover well:
+- Critical fallback reliability for history storage
+- Baseline treatment-plan logic stability
+
+What is not comprehensively covered yet:
+- End-to-end API tests for /predict and /forecast-risk
+- Frontend integration tests (UI automation)
+- Performance/load testing
+- Security-focused testing (rate limit abuse, file fuzzing)
+
+====================================================================
+15) BUSINESS VALUE EXPLAINED BY FUNCTION
+====================================================================
+Crop Scanner value:
+- Faster first-level diagnosis support for field teams
+
+Treatment + product value:
+- Converts diagnosis into actionable next steps
+
+Weather advisory value:
+- Helps reduce mistimed spray operations
+
+Voice output value:
+- Improves usability for farmers preferring spoken guidance
+
+History + dashboard value:
+- Enables traceability, repeated monitoring, and trend tracking
+
+Knowledge base value:
+- Supports awareness and quick self-learning within the app
+
+====================================================================
+16) KNOWN GAPS / RISKS (IMPORTANT FOR PLANNING)
+====================================================================
+1. Model artifact is external
+- model.h5 is not in repo, so prediction depends on separately sourced file.
+
+2. External API dependency
+- Weather and geocoding require internet + valid API key.
+
+3. Forecast day mismatch in UX vs backend utility cap
+- UI offers 6/7 day options; utility currently caps effective horizon to 5.
+
+4. No explicit severity score/class in backend
+- UI text mentions severity in some places; backend currently provides confidence only.
+
+5. Product links are generated searches
+- Not inventory-verified recommendations; should be communicated as guidance links.
+
+6. Geocoding in analytics may add latency
+- Hotspot endpoint may be slower with many distinct locations.
+
+====================================================================
+17) DATA, PRIVACY, AND OPERATIONS NOTES
+====================================================================
+Stored user identifier:
+- Pseudonymous farmer ID stored in browser localStorage and backend history
+
+Stored scan content:
+- Disease/treatment/location/time/product names
+- Not a full personal profile system, but still operational data
+
+Operational considerations:
+- Add backup strategy for SQLite path in local fallback mode
+- Define retention policy for scan history in production
+- Consider audit trail/versioning for recommendation dictionaries
+
+====================================================================
+18) FILE MAP (WHAT LIVES WHERE)
+====================================================================
+Root:
+- README.md (project overview + setup)
+- requirements.txt (points to backend requirements)
+- screenshots/ (UI documentation images)
+- assets/ (architecture/workflow images)
+
+Backend:
+- main.py: server boot
+- app.py: routes + orchestration
+- database.py: Mongo setup
+- utils/: treatment/weather/location/history/analytics/voice logic
+- model/: class index + expected model.h5 location
+- static/: served media artifacts
+
+Frontend:
+- home.html, index.html, dashboard.html, advisory.html, library.html
+- app.js: shared layout shell
+- scan.js: scanner + rich result rendering
+- dashboard.js: history + modal UI
+- advisory.js: weather/forecast decision UI
+- library.js: static disease reference explorer
+
+Tests:
+- tests/test_history_local.py
+- tests/test_treatment.py
+
+====================================================================
+19) HANDOFF MESSAGE FOR OTHER DEPARTMENTS
+====================================================================
+If you are from Product/Operations/Management:
+- AgroScan is production-style in architecture but still at "advanced prototype / pre-production" maturity.
+- Core farmer workflow is complete and demonstrable end-to-end.
+- Reliability is improved by Mongo->SQLite fallback and clear API validation.
+- Most immediate quality upgrades should focus on:
+  - broader automated testing,
+  - deployment hardening,
+  - model artifact/version governance,
+  - and explicit severity + confidence communication alignment.
+
+If you are from QA:
+- Prioritize endpoint negative tests, image input fuzzing, and geolocation denial flows.
+
+If you are from Operations:
+- Prioritize environment secret management and runtime monitoring around /predict latency and weather API failures.
+
+====================================================================
+20) QUICK GLOSSARY
+====================================================================
+- FastAPI: Python framework used for backend APIs.
+- Geocoding: converting location names to latitude/longitude.
+- TTS: text-to-speech, used for voice advisory.
+- Confidence: probability-like score for top prediction.
+- Fallback storage: alternate local DB used when primary DB is unavailable.
+- Hotspot analytics: concentration trends by location and disease history.
+
+END OF DOCUMENT
