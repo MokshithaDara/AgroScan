@@ -19,7 +19,7 @@ Farmers often rely on manual disease identification, which is slow and error-pro
 
 ## System Architecture
 
-![System Architecture](assets/system-architecture.png)
+![System Architecture](assets/system-architecture-v2.png)
 
 ```mermaid
 flowchart LR
