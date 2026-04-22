@@ -151,13 +151,21 @@ Crop-wise class distribution (from project documentation):
 
 ![Prediction Result](screenshots/prediction-result.png)
 
-### Treatment Recommendation (Treatment + Weather + Voice)
+### Expanded Insights (Disease + Treatment + Weather)
 
-![Treatment Recommendation](screenshots/treatment-weather-voice.png)
+![Expanded Insights](screenshots/insights-expanded.png)
+
+### Field Application Guide + Recommended Products
+
+![Field Guide and Products](screenshots/field-guide-products.png)
 
 ### Dashboard/History Page
 
 ![Dashboard History](screenshots/dashboard-history.png)
+
+### Dashboard Scan Details Modal
+
+![Dashboard Modal](screenshots/dashboard-modal.png)
 
 ## Installation Steps
 
